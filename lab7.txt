@@ -1,0 +1,37 @@
+import pandas as pd
+
+train = pd.DataFrame({
+    "age": [25, None, 40, 33],
+    "city": ["NY", "SF", None, "NY"],
+})
+
+test = pd.DataFrame({
+    "age": [None, 50],
+    "city": ["SF", None],
+})
+
+def fit_imputer(df):
+    numeric_cols = df.select_dtypes(include="number").columns
+    cat_cols = df.select_dtypes(include="object").columns
+    medians = df[numeric_cols].median()
+    modes = df[cat_cols].mode().iloc[0]
+    return {"medians": medians, "modes": modes}
+
+def transform_imputer(df, params, add_indicators=True):
+    df = df.copy()
+    for col in params["medians"].index:
+        if add_indicators:
+            df[col + "_missing"] = df[col].isna().astype(int)
+        df[col] = df[col].fillna(params["medians"][col])
+    for col in params["modes"].index:
+        if add_indicators:
+            df[col + "_missing"] = df[col].isna().astype(int)
+        df[col] = df[col].fillna(params["modes"][col])
+    return df
+
+params = fit_imputer(train)
+train_imp = transform_imputer(train, params)
+test_imp = transform_imputer(test, params)
+
+print(train_imp)
+print(test_imp)

@@ -1,0 +1,34 @@
+import numpy as np
+import pandas as pd
+
+raw = {
+    "age": [25, "N/A", 40, 33, "?"],
+    "income": [50000, 60000, None, "unknown", 80000],
+    "churned": [0, 1, 0, 1, 0],
+}
+
+df_raw = pd.DataFrame(raw)
+df = df_raw.replace(["N/A", "NA", "not reported", "unknown", "?"], np.nan)
+
+def missing_summary(df):
+    col_missing = df.isna().mean() * 100
+    row_missing = df.isna().mean(axis=1) * 100
+    return col_missing, row_missing
+
+col_missing, row_missing = missing_summary(df)
+
+df_a = df.dropna(subset=["age", "income"])
+
+df_b = df.copy()
+for col in ["age", "income"]:
+    df_b[col + "_missing"] = df_b[col].isna().astype(int)
+    df_b[col] = pd.to_numeric(df_b[col], errors='coerce')
+    df_b[col] = df_b[col].fillna(df_b[col].median())
+
+print(len(df_a))
+print(len(df_b))
+
+for col in ["age", "income"]:
+    print(df_a[col].mean(), df_b[col].mean())
+
+print(df_b[["age_missing", "income_missing"]])
